@@ -1,42 +1,41 @@
-class MiniMaxAgent:
-    def __init__(self, state_space_graph, start_node):
+class MiniMaxSearch:
+    def __init__(self, state_space_graph):
         self.state_space_graph = state_space_graph
-        self.start_node = start_node
-    
-    def minimax(self, node, depth, maximizing_player):
-        # Base case: if we reach a leaf node or max depth, return the utility value
-        if not self.state_space_graph[node]['neighbors'] or depth == 0:
-            return self.state_space_graph[node]['utility'] if self.state_space_graph[node]['utility'] is not None else 0
-        
-        if maximizing_player:
-            max_eval = float('-inf')
-            for neighbor in self.state_space_graph[node]['neighbors']:
+
+    def minimax(self, state, depth, is_maximizing):
+        # Base case: if depth is 0 or the state is a terminal state
+        if depth == 0 or not self.state_space_graph[state]["neighbors"]:
+            utility = self.state_space_graph[state].get("utility", 0)
+            return utility
+
+        if is_maximizing:
+            max_eval = -float('inf')
+            for neighbor in self.state_space_graph[state]["neighbors"]:
                 eval = self.minimax(neighbor, depth - 1, False)
-                max_eval = max(max_eval, eval)
-            return max_eval
+                if eval is not None:
+                    max_eval = max(max_eval, eval)
+            return max_eval if max_eval != -float('inf') else None
         else:
             min_eval = float('inf')
-            for neighbor in self.state_space_graph[node]['neighbors']:
+            for neighbor in self.state_space_graph[state]["neighbors"]:
                 eval = self.minimax(neighbor, depth - 1, True)
-                min_eval = min(min_eval, eval)
-            return min_eval
-    
-    def best_destination(self):
-        # Determine the best destination by running the minimax search from the start node
-        best_value = float('-inf')
-        best_node = self.start_node
-        
-        for neighbor in self.state_space_graph[self.start_node]['neighbors']:
-            node_value = self.minimax(neighbor, 3, False)  # Depth of 3 is arbitrarily chosen for this example
-            if node_value > best_value:
-                best_value = node_value
-                best_node = neighbor
-        
-        return best_node, best_value
+                if eval is not None:
+                    min_eval = min(min_eval, eval)
+            return min_eval if min_eval != float('inf') else None
 
+    def find_best_destination(self, start_state, depth):
+        best_value = -float('inf')
+        best_move = None
 
-# Figure 4
+        for neighbor in self.state_space_graph[start_state]["neighbors"]:
+            value = self.minimax(neighbor, depth - 1, False)
+            if value is not None and value > best_value:
+                best_value = value
+                best_move = neighbor
 
+        return best_move, best_value
+
+# Define the state space graph (terminal nodes have utility values, adversarial nodes do not)
 state_space_graph4 = {
 "Shambu": {
     "neighbors":["Gedo"],
@@ -125,12 +124,11 @@ state_space_graph4 = {
     "utility": 9
     }
 }
+# Get valid input from the user
 
-# Initialize the agent
-start_state = input("Enter intial state: ")
-agent = MiniMaxAgent(state_space_graph4, start_state)
+minimax_search = MiniMaxSearch(state_space_graph4)
+start_state = input("Enter initial state: ")
+depth = 3  # Increased depth to allow deeper exploration
+best_destination, best_value = minimax_search.find_best_destination(start_state, depth)
 
-# Get the best destination based on MiniMax search
-best_destination, utility = agent.best_destination()
-print(f"The best route from {start_state} to {best_destination} is with a utility of {utility}.")
-
+print(f"Best destination from {start_state} is {best_destination} with a utility of {best_value}")
